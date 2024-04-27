@@ -27,7 +27,7 @@ def reverse_normals():
     for obj in selected_objects:
         cmds.polyNormal(obj, normalMode=0, userNormalMode=0)
 
-#def setClipPlanes():
+def setClipPlanes():
     """
     Sets the near clip plane to 1 and the far clip plane to 1000000.
     """
