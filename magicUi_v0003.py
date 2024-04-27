@@ -1,6 +1,6 @@
-# camera and cone tools #
+# camera and cone tools: Camera Magic v3.04262024 #
 # use at your own risk #
-# create 5/29/2020#
+# create 5/29/2020
 
 # update:4/26/2024
 
@@ -13,76 +13,6 @@ import re
 if not cmds.pluginInfo('Type', loaded=True, query=True):
     cmds.loadPlugin('Type')
 
-# if UI window  already exists will close and re-open #
-# if cmds.window(camWindow, q=True, exists=True):
-#     cmds.deleteUI(camWindow)
-
-
-# grab camera attribute and creat variables#
-allCams = cmds.ls(type=('camera'), l=True)
-Cams = [camera for camera in allCams if
-        cmds.camera(cmds.listRelatives(camera, parent=True)[0], startupCamera=True, q=True)]
-myCams = list(set(allCams) - set(Cams))
-tCams = cmds.listRelatives(myCams, parent=True, fullPath=True)
-
-camWindow = cmds.window(t='Camera Magic v1.04262024', w=300, h=500)
-
-cmds.columnLayout(adj=True)
-cmds.text("***First select Camera***")
-cmds.separator(h=20)
-
-selCamText = cmds.textField('Select Camera', w=200)
-cmds.button(label='Load Camera', w=50, c='set_camText()')
-
-cmds.text('Set Camera for Render')
-
-cmds.rowLayout(numberOfColumns=4, cw=(150, 150))
-
-cmds.button(label='Default', w=100, c='defaultCam()')
-cmds.button(label='AlphaGain', w=100, c='renCam()')
-cmds.button(label='RGBA>RGB', w=100, c='rgbMode()')
-cmds.button(label='LookThrough', w=100, c='lookThrough()')
-
-cmds.setParent('..')
-cmds.separator(h=20)
-
-# cmds.text('Alpha Gain')
-alGain = cmds.floatSliderGrp(label="Alpha Gain", min=0, max=1, pre=2, ss=0.01, field=True, value=0.85, dc='alphaGain()')
-
-cmds.separator(h=20)
-camLC = cmds.floatSliderGrp(label="Camera Locator Scale", min=1, max=50, field=True, value=1, dc='camLocScale()')
-cmds.separator(h=20)
-
-cmds.button(label='Create 3 Render Layers', c='addRenLayer()')
-cmds.separator(h=20)
-cmds.button(label='Create Motion Trail', c='createMT()')
-cmds.separator(h=20)
-cmds.text("***Select Locators***")
-cmds.separator(h=20)
-cmds.button(label="Create Cone Group", c="createCone()")
-cmds.separator(h=20)
-coneS = cmds.floatSliderGrp(label="Cones Size", min=0, max=20, field=True, value=1, dc='coneSize()')
-cmds.separator(h=20)
-cmds.button(label="Add Cones to Layer", c="addToLayer()")
-cmds.separator(h=20)
-cmds.gridLayout(numberOfColumns=5, cellWidthHeight=(100, 50))
-cmds.button(label='Multi Cut', command='multi_cut()')
-cmds.button(label='Insert Loop Tool', command='insert_loop_tool()')
-cmds.button(label='Freeze Transform', command='freeze_transform()')
-cmds.button(label='Delete History', command='delete_history()')
-cmds.button(label='Center Pivot', command='center_pivot()')
-cmds.button(label='loc2Pivot', command='create_locator_at_pivot()')
-cmds.button(label='Constraint', command='create_parent_constraint()')
-cmds.button(label='Constraint(MO)', command='create_parent_constraintMO()')
-cmds.button(label='Bake it!!', command='bake_simulation()')
-cmds.button(label="Reverse Normal", command='reverse_normals()')
-# cmds.separator(h=20)
-# cmds.button(label="Add to Render Layer", c="addRenLayer()")
-# cmds.separator(h=20)
-
-
-cmds.showWindow(camWindow)
-
 def multi_cut():
     cmds.MultiCutTool()
 
@@ -91,32 +21,40 @@ def insert_loop_tool():
 
 def freeze_transform():
     cmds.makeIdentity(apply=True, t=1, r=1, s=1, n=0)
-        
+
 def reverse_normals():
     selected_objects = cmds.ls(selection=True)
     for obj in selected_objects:
-        cmds.polyNormal(obj, normalMode=0, userNormalMode=0)                
-                                
-                                                                 
+        cmds.polyNormal(obj, normalMode=0, userNormalMode=0)
+
+#def setClipPlanes():
+    """
+    Sets the near clip plane to 1 and the far clip plane to 1000000.
+    """
+    camera_list = cmds.ls(type="camera")
+    for cam in camera_list:
+        cmds.setAttr(cam + ".nearClipPlane", 1)
+        cmds.setAttr(cam + ".farClipPlane", 1000000)
+
 def delete_history():
     cmds.DeleteHistory()
 
 def center_pivot():
     cmds.CenterPivot()
-        
-    
+
+
 def create_parent_constraint():
     # Get the currently selected objects
     selected = cmds.ls(selection=True)
-   
+
     if len(selected) < 2:
         print("Please select at least two objects.")
         return
 
     # Create a parent constraint
     cmds.parentConstraint(selected[0], selected[1], maintainOffset=False)
-    cmds.delete(parentConstraint)     
-        
+    cmds.delete(parentConstraint)
+
 def create_parent_constraintMO():
     # Get the currently selected objects
     selected = cmds.ls(selection=True)
@@ -126,8 +64,8 @@ def create_parent_constraintMO():
         return
 
     # Create a parent constraint
-    cmds.parentConstraint(selected[0], selected[1], maintainOffset=True)                    
-        
+    cmds.parentConstraint(selected[0], selected[1], maintainOffset=True)
+
 def create_locator_at_pivot():
     # Get the currently selected objects
     selected = cmds.ls(selection=True)
@@ -147,15 +85,15 @@ def create_locator_at_pivot():
 
     # Move the locator to the pivot point
     cmds.move(pivot[0], pivot[1], pivot[2], locator)
-    
+
 def bake_simulation():
     start = cmds.playbackOptions(q=True, min=True)
     end = cmds.playbackOptions(q=True, max=True)
     cmds.bakeResults(sm=True, sr=True, t=(start,end))
-        
+
     pairblend_nodes = cmds.listConnections(s=True, d=True, type="parentConstraint")
     if pairblend_nodes:
-        cmds.delete(pairblend_nodes)            
+        cmds.delete(pairblend_nodes)
 
 def set_camText():
     selected_camera = cmds.ls(sl=True)[0]
@@ -305,3 +243,78 @@ def addToLayer():
     cmds.createDisplayLayer(name='cone_group#', nr=True)
     cmds.setAttr('cone_group*.color', 13)
     cmds.editRenderLayerMembers('Cone', 'cone_grp*')
+
+# if UI window  already exists will close and re-open #
+if cmds.window("camwindow", q=True, exists=True):
+    cmds.deleteUI("camwindow")
+
+camWindow = cmds.window("camwindow", t='Camera Magic v3.04262024', w=300, h=500)
+
+# grab camera attribute and creat variables#
+allCams = cmds.ls(type=('camera'), l=True)
+Cams = [camera for camera in allCams if
+        cmds.camera(cmds.listRelatives(camera, parent=True)[0], startupCamera=True, q=True)]
+myCams = list(set(allCams) - set(Cams))
+tCams = cmds.listRelatives(myCams, parent=True, fullPath=True)
+
+
+
+cmds.columnLayout(adj=True)
+cmds.text("***First select Camera***")
+cmds.separator(h=20)
+
+selCamText = cmds.textField('Select Camera', w=200)
+cmds.button(label='Load Camera', w=50, c='set_camText()')
+
+cmds.text('Set Camera for Render')
+
+cmds.rowLayout(numberOfColumns=5, cw=(150, 150))
+
+cmds.button(label='Default', w=100, c='defaultCam()')
+cmds.button(label='AlphaGain', w=100, c='renCam()')
+cmds.button(label='RGBA>RGB', w=100, c='rgbMode()')
+cmds.button(label='LookThrough', w=100, c='lookThrough()')
+cmds.button(label='clipingPlane', w=100, c='setClipPlanes()')
+
+
+
+cmds.setParent('..')
+cmds.separator(h=20)
+
+# cmds.text('Alpha Gain')
+alGain = cmds.floatSliderGrp(label="Alpha Gain", min=0, max=1, pre=2, ss=0.01, field=True, value=0.85, dc='alphaGain()')
+
+cmds.separator(h=20)
+camLC = cmds.floatSliderGrp(label="Camera Locator Scale", min=1, max=50, field=True, value=1, dc='camLocScale()')
+cmds.separator(h=20)
+
+cmds.button(label='Create 3 Render Layers', c='addRenLayer()')
+cmds.separator(h=20)
+cmds.button(label='Create Motion Trail', c='createMT()')
+cmds.separator(h=20)
+cmds.text("***Select Locators***")
+cmds.separator(h=20)
+cmds.button(label="Create Cone Group", c="createCone()")
+cmds.separator(h=20)
+coneS = cmds.floatSliderGrp(label="Cones Size", min=0, max=20, field=True, value=1, dc='coneSize()')
+cmds.separator(h=20)
+cmds.button(label="Add Cones to Layer", c="addToLayer()")
+cmds.separator(h=20)
+cmds.gridLayout(numberOfColumns=5, cellWidthHeight=(100, 50))
+cmds.button(label='Multi Cut', command='multi_cut()')
+cmds.button(label='Insert Loop Tool', command='insert_loop_tool()')
+cmds.button(label='Freeze Transform', command='freeze_transform()')
+cmds.button(label='Delete History', command='delete_history()')
+cmds.button(label='Center Pivot', command='center_pivot()')
+cmds.button(label='loc2Pivot', command='create_locator_at_pivot()')
+cmds.button(label='Constraint', command='create_parent_constraint()')
+cmds.button(label='Constraint(MO)', command='create_parent_constraintMO()')
+cmds.button(label='Bake it!!', command='bake_simulation()')
+cmds.button(label="Reverse Normal", command='reverse_normals()')
+# cmds.separator(h=20)
+# cmds.button(label="Add to Render Layer", c="addRenLayer()")
+# cmds.separator(h=20)
+
+
+cmds.showWindow(camWindow)
+
