@@ -14,19 +14,24 @@ import re
 if not cmds.pluginInfo('Type', loaded=True, query=True):
     cmds.loadPlugin('Type')
 
+
 def multi_cut():
     cmds.MultiCutTool()
+
 
 def insert_loop_tool():
     cmds.InsertEdgeLoopTool()
 
+
 def freeze_transform():
     cmds.makeIdentity(apply=True, t=1, r=1, s=1, n=0)
+
 
 def reverse_normals():
     selected_objects = cmds.ls(selection=True)
     for obj in selected_objects:
         cmds.polyNormal(obj, normalMode=0, userNormalMode=0)
+
 
 def setClipPlanes():
     """
@@ -37,8 +42,10 @@ def setClipPlanes():
         cmds.setAttr(cam + ".nearClipPlane", 1)
         cmds.setAttr(cam + ".farClipPlane", 1000000)
 
+
 def delete_history():
     cmds.DeleteHistory()
+
 
 def center_pivot():
     cmds.CenterPivot()
@@ -56,6 +63,7 @@ def create_parent_constraint():
     cmds.parentConstraint(selected[0], selected[1], maintainOffset=False)
     cmds.delete(parentConstraint)
 
+
 def create_parent_constraintMO():
     # Get the currently selected objects
     selected = cmds.ls(selection=True)
@@ -67,6 +75,7 @@ def create_parent_constraintMO():
     # Create a parent constraint
     cmds.parentConstraint(selected[0], selected[1], maintainOffset=True)
 
+
 def create_locator_at_pivot():
     sel = cmds.ls(sl=1)
 
@@ -74,32 +83,35 @@ def create_locator_at_pivot():
         newLoc = cmds.spaceLocator()
         newCon = cmds.parentConstraint(obj, newLoc, mo=0)
 
+
 def bake_simulation():
     start = cmds.playbackOptions(q=True, min=True)
     end = cmds.playbackOptions(q=True, max=True)
-    cmds.bakeResults(sm=True, sr=True, t=(start,end))
+    cmds.bakeResults(sm=True, sr=True, t=(start, end))
 
     pairblend_nodes = cmds.listConnections(s=True, d=True, type="parentConstraint")
     if pairblend_nodes:
         cmds.delete(pairblend_nodes)
-        
+
+
 def locControl():
     sel = cmds.ls(sl=1)
     startTime = cmds.playbackOptions(q=True, minTime=True)
     endTime = cmds.playbackOptions(q=True, maxTime=True)
-    
+
     for obj in sel:
         newLoc = cmds.spaceLocator(n='locCtrl#')
         newCon = cmds.parentConstraint(obj, newLoc, mo=0)
         # bake animation to locator#
         cmds.bakeResults(newLoc, time=(startTime, endTime))
         cmds.delete(cn=True)
-    
+
         # delete keyframe in original#
         cmds.select(sel)
         cmds.cutKey(sel, s=True)
         # parent original back to locator#
         cmds.parentConstraint(newLoc, sel, mo=True)
+
 
 def set_camText():
     selected_camera = cmds.ls(sl=True)[0]
@@ -108,6 +120,7 @@ def set_camText():
     cmds.select(clear=True)
     cmds.select(selected_camera)
 
+
 def cameraFrustum():
     """
     Toggles the camera frustum visibility of the selected camera.
@@ -115,8 +128,8 @@ def cameraFrustum():
     # Get the selected camera transform
     selected = cmds.ls(selection=True)
     if not selected:
-      cmds.warning("Please select a camera!")
-      return
+        cmds.warning("Please select a camera!")
+        return
 
     camera = selected[0]
 
@@ -128,7 +141,8 @@ def cameraFrustum():
 
     # Set the new visibility state (toggle)
     cmds.setAttr(camera_shape + ".displayCameraFrustum", not is_visible)
-    
+
+
 def lookThrough():
     # Get all cameras in the scene
     cameras = cmds.ls(type='camera')
@@ -258,13 +272,27 @@ def createCone():
         # cmds.createDisplayLayer(name='cone_group#', nr=True)
         # cmds.setAttr('cone_group*.color', 13)
         # cmds.editRenderLayerMembers('Cone', 'cone_grp*')
-                
+
+
 def poly_cam():
-    cmds.file("G:\pythonScript\OBJ\camera.obj", i=True, returnNewNodes=True)[0]
-        
+    sel = cmds.ls(sl=1)
+    startTime = cmds.playbackOptions(q=True, minTime=True)
+    endTime = cmds.playbackOptions(q=True, maxTime=True)
+    polyCam = cmds.file("G:\pythonScript\OBJ\camera.obj", i=True, returnNewNodes=True)[0]
+    polyCamLoc = cmds.spaceLocator(name="polyCamLocator")[0]
+    cmds.parent('polyCamera', 'polyCamLocator')
+
+    for obj in sel:
+        newCon = cmds.parentConstraint(obj, polyCamLoc, mo=0)
+        # bake animation to locator#
+        cmds.bakeResults(polyCamLoc, time=(startTime, endTime))
+        cmds.delete(cn=True)
+
+
 def poly_man():
     cmds.file("G:\pythonScript\OBJ\Male6Foot.obj", i=True, returnNewNodes=True)[0]
-        
+
+
 def coneSize():
     coneScale = cmds.floatSliderGrp(coneS, q=True, value=True)
     cmds.scale(coneScale, coneScale, coneScale)
@@ -274,6 +302,7 @@ def addToLayer():
     cmds.createDisplayLayer(name='cone_group#', nr=True)
     cmds.setAttr('cone_group*.color', 13)
     cmds.editRenderLayerMembers('Cone', 'cone_grp*')
+
 
 # if UI window  already exists will close and re-open #
 if cmds.window("camwindow", q=True, exists=True):
@@ -288,8 +317,6 @@ Cams = [camera for camera in allCams if
 myCams = list(set(allCams) - set(Cams))
 tCams = cmds.listRelatives(myCams, parent=True, fullPath=True)
 
-
-
 cmds.columnLayout(adj=True)
 cmds.text("***First select Camera***")
 cmds.separator(h=20)
@@ -300,7 +327,7 @@ cmds.button(label='Load Camera', w=50, c='set_camText()')
 cmds.text('Set Camera for Render')
 
 cmds.rowLayout(numberOfColumns=6, cw=(100, 100))
-#cmds.gridLayout(numberOfColumns=3, cellWidthHeight=(100, 30))
+# cmds.gridLayout(numberOfColumns=3, cellWidthHeight=(100, 30))
 
 cmds.button(label='Default', w=100, c='defaultCam()')
 cmds.button(label='AlphaGain', w=100, c='renCam()')
@@ -308,10 +335,6 @@ cmds.button(label='RGBA>RGB', w=100, c='rgbMode()')
 cmds.button(label='LookThrough', w=100, c='lookThrough()')
 cmds.button(label='clippingPlane', w=100, c='setClipPlanes()')
 cmds.button(label='Frustum', w=100, c='cameraFrustum()')
-
-
-
-
 
 cmds.setParent('..')
 cmds.separator(h=20)
