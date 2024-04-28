@@ -1,6 +1,6 @@
 # camera and cone tools: Camera Magic v3.04262024 #
 # use at your own risk #
-# create 5/29/2020
+# create 5/29/2020#
 
 # update:4/26/2024
 
@@ -67,24 +67,12 @@ def create_parent_constraintMO():
     cmds.parentConstraint(selected[0], selected[1], maintainOffset=True)
 
 def create_locator_at_pivot():
-    # Get the currently selected objects
-    selected = cmds.ls(selection=True)
+    sel = cmds.ls(sl=1)
 
-    if not selected:
-        print("No object selected.")
-        return
-
-    # Get the first selected object
-    obj = selected[0]
-
-    # Get the pivot point
-    pivot = cmds.xform(obj, query=True, worldSpace=True, rotatePivot=True)
-
-    # Create a locator
-    locator = cmds.spaceLocator(name=obj + "_Locator")[0]
-
-    # Move the locator to the pivot point
-    cmds.move(pivot[0], pivot[1], pivot[2], locator)
+    for obj in sel:
+        newLoc = cmds.spaceLocator()
+        newCon = cmds.parentConstraint(obj, newLoc, mo=0)
+        cmds.delete(newCon)
 
 def bake_simulation():
     start = cmds.playbackOptions(q=True, min=True)
@@ -101,6 +89,22 @@ def set_camText():
     cmds.textField(selCamText, edit=True, text=myCams[0])
     cmds.select(clear=True)
     cmds.select(selected_camera)
+    
+def locStayThere():
+    sel = cmds.ls(sl=1)
+
+    for obj in sel:
+        newLoc = cmds.spaceLocator(n='locCtrl#')
+        newCon = cmds.parentConstraint(obj, newLoc, mo=0)
+        # bake animation to locator#
+        cmds.bakeResults(newLoc, time=(startTime, endTime))
+        cmds.delete(cn=True)
+    
+        # delete keyframe in original#
+        cmds.select(sel)
+        cmds.cutKey(sel, s=True)
+        # parent original back to locator#
+        cmds.parentConstraint(newLoc, sel, mo=True)
 
 
 def lookThrough():
@@ -300,7 +304,7 @@ coneS = cmds.floatSliderGrp(label="Cones Size", min=0, max=20, field=True, value
 cmds.separator(h=20)
 cmds.button(label="Add Cones to Layer", c="addToLayer()")
 cmds.separator(h=20)
-cmds.gridLayout(numberOfColumns=5, cellWidthHeight=(100, 50))
+cmds.gridLayout(numberOfColumns=6, cellWidthHeight=(100, 50))
 cmds.button(label='Multi Cut', command='multi_cut()')
 cmds.button(label='Insert Loop Tool', command='insert_loop_tool()')
 cmds.button(label='Freeze Transform', command='freeze_transform()')
@@ -311,6 +315,9 @@ cmds.button(label='Constraint', command='create_parent_constraint()')
 cmds.button(label='Constraint(MO)', command='create_parent_constraintMO()')
 cmds.button(label='Bake it!!', command='bake_simulation()')
 cmds.button(label="Reverse Normal", command='reverse_normals()')
+cmds.button(label="locStayThere", command='locStayThere()')
+
+
 # cmds.separator(h=20)
 # cmds.button(label="Add to Render Layer", c="addRenLayer()")
 # cmds.separator(h=20)
