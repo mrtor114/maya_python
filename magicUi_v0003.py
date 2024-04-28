@@ -1,5 +1,6 @@
 # camera and cone tools: Camera Magic v3.04262024 #
 # use at your own risk #
+# Line 256,259 import polyCam and 6ftman path need to change path location#
 # create 5/29/2020#
 
 # update:4/26/2024
@@ -72,7 +73,6 @@ def create_locator_at_pivot():
     for obj in sel:
         newLoc = cmds.spaceLocator()
         newCon = cmds.parentConstraint(obj, newLoc, mo=0)
-        cmds.delete(newCon)
 
 def bake_simulation():
     start = cmds.playbackOptions(q=True, min=True)
@@ -82,17 +82,12 @@ def bake_simulation():
     pairblend_nodes = cmds.listConnections(s=True, d=True, type="parentConstraint")
     if pairblend_nodes:
         cmds.delete(pairblend_nodes)
-
-def set_camText():
-    selected_camera = cmds.ls(sl=True)[0]
-    cmds.select(tCams)
-    cmds.textField(selCamText, edit=True, text=myCams[0])
-    cmds.select(clear=True)
-    cmds.select(selected_camera)
-    
-def locStayThere():
+        
+def locControl():
     sel = cmds.ls(sl=1)
-
+    startTime = cmds.playbackOptions(q=True, minTime=True)
+    endTime = cmds.playbackOptions(q=True, maxTime=True)
+    
     for obj in sel:
         newLoc = cmds.spaceLocator(n='locCtrl#')
         newCon = cmds.parentConstraint(obj, newLoc, mo=0)
@@ -106,7 +101,34 @@ def locStayThere():
         # parent original back to locator#
         cmds.parentConstraint(newLoc, sel, mo=True)
 
+def set_camText():
+    selected_camera = cmds.ls(sl=True)[0]
+    cmds.select(tCams)
+    cmds.textField(selCamText, edit=True, text=myCams[0])
+    cmds.select(clear=True)
+    cmds.select(selected_camera)
 
+def cameraFrustum():
+    """
+    Toggles the camera frustum visibility of the selected camera.
+    """
+    # Get the selected camera transform
+    selected = cmds.ls(selection=True)
+    if not selected:
+      cmds.warning("Please select a camera!")
+      return
+
+    camera = selected[0]
+
+    # Get the camera shape
+    camera_shape = cmds.listRelatives(camera, shapes=True)[0]
+
+    # Get the current visibility state
+    is_visible = cmds.getAttr(camera_shape + ".displayCameraFrustum")
+
+    # Set the new visibility state (toggle)
+    cmds.setAttr(camera_shape + ".displayCameraFrustum", not is_visible)
+    
 def lookThrough():
     # Get all cameras in the scene
     cameras = cmds.ls(type='camera')
@@ -236,8 +258,13 @@ def createCone():
         # cmds.createDisplayLayer(name='cone_group#', nr=True)
         # cmds.setAttr('cone_group*.color', 13)
         # cmds.editRenderLayerMembers('Cone', 'cone_grp*')
-
-
+                
+def poly_cam():
+    cmds.file("G:\pythonScript\OBJ\camera.obj", i=True, returnNewNodes=True)[0]
+        
+def poly_man():
+    cmds.file("G:\pythonScript\OBJ\Male6Foot.obj", i=True, returnNewNodes=True)[0]
+        
 def coneSize():
     coneScale = cmds.floatSliderGrp(coneS, q=True, value=True)
     cmds.scale(coneScale, coneScale, coneScale)
@@ -272,13 +299,17 @@ cmds.button(label='Load Camera', w=50, c='set_camText()')
 
 cmds.text('Set Camera for Render')
 
-cmds.rowLayout(numberOfColumns=5, cw=(150, 150))
+cmds.rowLayout(numberOfColumns=6, cw=(100, 100))
+#cmds.gridLayout(numberOfColumns=3, cellWidthHeight=(100, 30))
 
 cmds.button(label='Default', w=100, c='defaultCam()')
 cmds.button(label='AlphaGain', w=100, c='renCam()')
 cmds.button(label='RGBA>RGB', w=100, c='rgbMode()')
 cmds.button(label='LookThrough', w=100, c='lookThrough()')
-cmds.button(label='clipingPlane', w=100, c='setClipPlanes()')
+cmds.button(label='clippingPlane', w=100, c='setClipPlanes()')
+cmds.button(label='Frustum', w=100, c='cameraFrustum()')
+
+
 
 
 
@@ -304,7 +335,7 @@ coneS = cmds.floatSliderGrp(label="Cones Size", min=0, max=20, field=True, value
 cmds.separator(h=20)
 cmds.button(label="Add Cones to Layer", c="addToLayer()")
 cmds.separator(h=20)
-cmds.gridLayout(numberOfColumns=6, cellWidthHeight=(100, 50))
+cmds.gridLayout(numberOfColumns=6, cellWidthHeight=(102, 50))
 cmds.button(label='Multi Cut', command='multi_cut()')
 cmds.button(label='Insert Loop Tool', command='insert_loop_tool()')
 cmds.button(label='Freeze Transform', command='freeze_transform()')
@@ -315,8 +346,9 @@ cmds.button(label='Constraint', command='create_parent_constraint()')
 cmds.button(label='Constraint(MO)', command='create_parent_constraintMO()')
 cmds.button(label='Bake it!!', command='bake_simulation()')
 cmds.button(label="Reverse Normal", command='reverse_normals()')
-cmds.button(label="locStayThere", command='locStayThere()')
-
+cmds.button(label="PolyCam", command='poly_cam()')
+cmds.button(label="6ft_man", command='poly_man()')
+cmds.button(label="loc Control", command='locControl()')
 
 # cmds.separator(h=20)
 # cmds.button(label="Add to Render Layer", c="addRenLayer()")
